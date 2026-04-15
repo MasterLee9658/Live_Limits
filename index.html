@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ninjacart Financial Terminal</title>
+    <title>Ninjacart Financial Ninjacart</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React and ReactDOM -->
@@ -264,7 +264,7 @@
                                                             </div>
                                                         </div>
                                                         <div className="bg-slate-950/20">
-                                                            <DataRow label="Legal Name" value={row.name} icon={<Icon name="User" />} />
+                                                            <DataRow label="Customer Name" value={row.name} icon={<Icon name="User" />} />
                                                             <DataRow label="Phone Link" value={row.phone} icon={<Icon name="Phone" />} />
                                                             <DataRow label="BNPL Allocation" value={`₹${row.bnplLimit.toLocaleString()}`} icon={<Icon name="CreditCard" />} isLimit />
                                                             <DataRow label="Fungible Credits" value={`₹${row.fungibleLimit.toLocaleString()}`} icon={<Icon name="Activity" />} />
