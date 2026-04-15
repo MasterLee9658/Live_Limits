@@ -17,8 +17,42 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1e293b; }
-        .soft-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020617; 
+            color: #f1f5f9;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .nebula-pulse { 
+            animation: pulse 20s ease-in-out infinite; 
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.3; }
+            50% { transform: scale(1.1) translate(-2%, -2%); opacity: 0.5; }
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .neon-text {
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.7), 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Custom Scrollbar for Terminal Look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.4); }
     </style>
 </head>
 <body>
@@ -26,12 +60,12 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
-        const { motion, AnimatePresence } = FramerMotion;
+        const motion = window.Motion?.motion || window.FramerMotion?.motion || { div: 'div' };
+        const AnimatePresence = window.Motion?.AnimatePresence || window.FramerMotion?.AnimatePresence || (({children}) => children);
 
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQuV21M4OXkPPkTO3dGjp_0dxxnWJObLs4DbhIWt2q-Wi9mI593a6iZ8CJNtoaInLMmx5ZvKV4DWhIL/pub?gid=0&single=true&output=csv";
         const ACCESS_PASSWORD = "ninja@123";
 
-        // Icon component wrapper for Lucide
         const Icon = ({ name, size = 16, className = "" }) => {
             const icons = {
                 Hash: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="4" x2="20" y1="9" y2="9"/><line x1="4" x2="20" y1="15" y2="15"/><line x1="10" x2="8" y1="3" y2="21"/><line x1="16" x2="14" y1="3" y2="21"/></svg>,
@@ -51,30 +85,23 @@
             return icons[name] || null;
         };
 
-        const SideCell = ({ label, value, icon, isLimit, isDanger, isSuccess }) => (
-            <div className="flex items-center px-6 py-3 hover:bg-slate-50 transition-colors group">
-                <div className="w-1/3 md:w-1/4 flex items-center gap-3">
-                    <span className="text-slate-400 group-hover:text-emerald-600 transition-colors">{icon}</span>
-                    <span className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">{label}</span>
+        const DataRow = ({ label, value, icon, isLimit, isDanger, isSuccess }) => (
+            <div className="flex items-center px-6 py-4 hover:bg-white/5 transition-all group border-b border-white/5 last:border-0">
+                <div className="w-1/3 flex items-center gap-3">
+                    <span className="text-slate-500 group-hover:text-emerald-400 transition-colors">{icon}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{label}</span>
                 </div>
                 <div className="flex-1">
-                    <div className={`text-xs md:text-sm font-bold tracking-tight ${
-                        isLimit ? 'text-emerald-600 font-black' : 
-                        isDanger ? 'text-rose-600 uppercase' : 
-                        isSuccess ? 'text-emerald-600 uppercase' :
-                        'text-slate-800'
+                    <div className={`text-sm font-bold tracking-tight ${
+                        isLimit ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 
+                        isDanger ? 'text-rose-400 uppercase drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]' : 
+                        isSuccess ? 'text-emerald-400 uppercase' :
+                        'text-slate-100'
                     }`}>
                         {value}
                     </div>
                 </div>
             </div>
-        );
-
-        const NinjacartLogo = ({ className }) => (
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className={`${className} flex items-center gap-3`}>
-                <img src="image_7fa731.png" alt="Logo" className="h-full w-auto" />
-                <img src="ninjacart.png" alt="Ninjacart" className="h-[60%] w-auto hidden md:block" />
-            </motion.div>
         );
 
         const App = () => {
@@ -83,7 +110,6 @@
             const [loginError, setLoginError] = useState(false);
             const [data, setData] = useState([]);
             const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
             const [phoneSearch, setPhoneSearch] = useState('');
             const [idSearch, setIdSearch] = useState('');
 
@@ -99,160 +125,180 @@
                 }
             };
 
-            const handleLogout = () => {
-                setIsAuthenticated(false);
-                setPasswordInput('');
-                setData([]);
-                setPhoneSearch('');
-                setIdSearch('');
-            };
-
-            const fetchData = async (retries = 5, delay = 1000) => {
+            const fetchData = async () => {
                 try {
                     setLoading(true);
-                    setError(null);
                     const response = await fetch(CSV_URL);
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                     const csvText = await response.text();
-                    const parsed = parseCSV(csvText);
+                    const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
+                    const parsed = lines.slice(1).map(line => {
+                        const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/"/g, ''));
+                        return {
+                            auId: cols[1] || 'N/A',
+                            name: cols[2] || 'Unknown',
+                            phone: cols[3] || '',
+                            bnplLimit: parseFloat(cols[4]) || 0,
+                            fungibleLimit: parseFloat(cols[5]) || 0,
+                            dpd: parseInt(cols[6]) || 0,
+                            activeDpdLoans: parseInt(cols[7]) || 0
+                        };
+                    });
                     setData(parsed);
                 } catch (err) {
-                    if (retries > 0) {
-                        setTimeout(() => fetchData(retries - 1, delay * 2), delay);
-                    } else {
-                        setError("Database connection error. Try again.");
-                    }
+                    console.error("Fetch failed", err);
                 } finally {
                     setLoading(false);
                 }
             };
 
-            const parseCSV = (text) => {
-                const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-                return lines.slice(1).map(line => {
-                    const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/"/g, ''));
-                    return {
-                        auId: cols[1] || 'N/A',
-                        name: cols[2] || 'Unknown',
-                        phone: cols[3] || '',
-                        bnplLimit: parseFloat(cols[4]) || 0,
-                        fungibleLimit: parseFloat(cols[5]) || 0,
-                        dpd: parseInt(cols[6]) || 0,
-                        activeDpdLoans: parseInt(cols[7]) || 0
-                    };
-                }).filter(Boolean);
-            };
-
             const filteredData = useMemo(() => {
-                const isSearching = phoneSearch.trim() !== '' || idSearch.trim() !== '';
-                if (!isSearching) return [];
+                const p = phoneSearch.trim();
+                const id = idSearch.trim().toLowerCase();
+                if (!p && !id) return [];
                 return data.filter(item => 
-                    (phoneSearch === '' || item.phone.toString().includes(phoneSearch)) &&
-                    (idSearch === '' || item.auId.toLowerCase().includes(idSearch.toLowerCase()))
+                    (p === '' || item.phone.toString().includes(p)) &&
+                    (id === '' || item.auId.toLowerCase().includes(id))
                 );
             }, [data, phoneSearch, idSearch]);
 
-            const isSearching = phoneSearch.trim() !== '' || idSearch.trim() !== '';
-
             return (
-                <div className="min-h-screen bg-white text-slate-800 p-4 md:p-6 flex flex-col relative">
+                <div className="min-h-screen flex flex-col relative overflow-hidden">
+                    <div className="fixed inset-0 pointer-events-none z-0">
+                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=2000')] bg-cover bg-center opacity-30 nebula-pulse" style={{ mixBlendMode: 'screen' }}></div>
+                        <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-purple-900/20 blur-[150px] rounded-full"></div>
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[80%] bg-emerald-900/10 blur-[150px] rounded-full"></div>
+                        <div className="absolute inset-0 bg-slate-950/40"></div>
+                    </div>
+
                     <AnimatePresence mode="wait">
                         {!isAuthenticated ? (
-                            <motion.div key="login" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex-1 flex items-center justify-center relative z-10">
-                                <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] border border-slate-200 soft-shadow text-center">
-                                    <NinjacartLogo className="h-12 mx-auto mb-8 justify-center" />
-                                    <h2 className="text-xl font-black tracking-widest uppercase text-slate-900 mb-2">Secure Access</h2>
-                                    <form onSubmit={handleLogin} className="space-y-4 mt-8">
+                            <motion.div key="login" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="flex-1 flex items-center justify-center p-6 z-10">
+                                <div className="w-full max-w-md glass-panel p-10 rounded-[2.5rem] text-center">
+                                    <div className="mb-8 flex justify-center items-center gap-3">
+                                        <img src="image_7fa731.png" className="h-10" />
+                                        <div className="h-8 w-px bg-white/10 mx-1"></div>
+                                        <span className="text-xl font-black tracking-tighter italic text-white">NINJACART</span>
+                                    </div>
+                                    <h2 className="text-xs font-black tracking-[0.3em] uppercase text-emerald-400 mb-8">Financial Gateway</h2>
+                                    <form onSubmit={handleLogin} className="space-y-4">
                                         <div className="relative group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2"><Icon name="Lock" className={loginError ? 'text-rose-500' : 'text-slate-400'} /></div>
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2"><Icon name="Lock" className={loginError ? 'text-rose-500' : 'text-slate-500'} /></div>
                                             <input 
                                                 type="password"
-                                                placeholder="ENTER ACCESS KEY"
-                                                className={`w-full pl-12 pr-4 py-4 bg-slate-50 border rounded-2xl text-center text-sm font-black tracking-[0.2em] focus:outline-none transition-all ${loginError ? 'border-rose-500 text-rose-500' : 'border-slate-200 text-slate-900 focus:border-emerald-500'}`}
+                                                placeholder="ACCESS KEY"
+                                                className={`w-full pl-12 pr-4 py-4 bg-slate-950/50 border rounded-2xl text-center text-sm font-black tracking-[0.3em] focus:outline-none transition-all ${loginError ? 'border-rose-500 text-rose-500' : 'border-white/10 text-white focus:border-emerald-500/50'}`}
                                                 value={passwordInput}
                                                 onChange={(e) => setPasswordInput(e.target.value)}
                                             />
                                         </div>
-                                        <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 shadow-md transition-colors">
-                                            Authorize <Icon name="ArrowRight" />
+                                        <button type="submit" className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all">
+                                            Verify Authorization <Icon name="ArrowRight" />
                                         </button>
                                     </form>
                                 </div>
                             </motion.div>
                         ) : (
-                            <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 relative z-10 max-w-4xl mx-auto w-full">
-                                <header className="flex items-center justify-between mb-8">
-                                    <NinjacartLogo className="h-8 md:h-10" />
-                                    <div className="flex gap-3">
-                                        <button onClick={() => fetchData()} className="p-2 px-4 bg-slate-100 text-slate-600 hover:text-emerald-600 rounded-xl border border-slate-200 flex items-center gap-2 font-bold text-[10px] transition-all">
-                                            <Icon name="RefreshCw" className={loading ? "animate-spin" : ""} /> {loading ? "SYNCING..." : "REFRESH"}
+                            <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 relative z-10 max-w-4xl mx-auto w-full p-4 md:p-8">
+                                <header className="flex items-center justify-between mb-10">
+                                    <div className="flex items-center gap-4">
+                                        <img src="image_7fa731.png" className="h-10 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                        <div className="hidden md:block">
+                                            <h1 className="text-lg font-black tracking-tighter text-white uppercase italic">Terminal</h1>
+                                            <p className="text-[8px] font-bold text-emerald-500/80 tracking-[0.2em] uppercase">Status: Live Node</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Centered Large Neon Header */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 hidden md:block">
+                                        <div className="flex flex-col items-center">
+                                            <h2 className="text-xl font-black tracking-[0.4em] neon-text uppercase italic">
+                                                LIVE_LIMIT
+                                            </h2>
+                                            <div className="w-24 h-0.5 bg-emerald-500/50 rounded-full mt-1 blur-[1px]"></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button onClick={fetchData} className="p-2 px-4 bg-white/5 hover:bg-white/10 text-emerald-400 rounded-xl border border-white/5 flex items-center gap-2 font-black text-[9px] transition-all">
+                                            <Icon name="RefreshCw" className={loading ? "animate-spin" : ""} /> {loading ? "SYNC" : "REFRESH"}
                                         </button>
-                                        <button onClick={handleLogout} className="p-2 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl border border-rose-100 flex items-center gap-2 font-bold text-[10px] transition-all">
-                                            <Icon name="LogOut" /> EXIT
+                                        <button onClick={() => setIsAuthenticated(false)} className="p-2 px-4 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl border border-rose-500/20 flex items-center gap-2 font-black text-[9px] transition-all">
+                                            <Icon name="LogOut" /> DISCONNECT
                                         </button>
                                     </div>
                                 </header>
 
+                                {/* Mobile Centered Header */}
+                                <div className="md:hidden flex flex-col items-center mb-6">
+                                    <h2 className="text-lg font-black tracking-[0.3em] neon-text uppercase italic">
+                                        LIVE_LIMIT
+                                    </h2>
+                                    <div className="w-16 h-0.5 bg-emerald-500/50 rounded-full mt-1 blur-[1px]"></div>
+                                </div>
+
                                 <div className="space-y-6">
-                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="Phone" /></div>
-                                            <input type="text" placeholder="Search Mobile..." className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 transition-colors" value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)} />
+                                    <div className="glass-panel p-5 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors"><Icon name="Phone" /></div>
+                                            <input type="text" placeholder="MOBILE_NUM" className="w-full pl-12 pr-4 py-4 bg-slate-950/40 border border-white/5 rounded-2xl text-xs font-bold tracking-widest text-white focus:outline-none focus:border-emerald-500/30 transition-all uppercase" value={phoneSearch} onChange={(e) => setPhoneSearch(e.target.value)} />
                                         </div>
-                                        <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="Hash" /></div>
-                                            <input type="text" placeholder="Search AU_ID..." className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-500 transition-colors" value={idSearch} onChange={(e) => setIdSearch(e.target.value)} />
+                                        <div className="relative group">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors"><Icon name="Hash" /></div>
+                                            <input type="text" placeholder="AU_ID" className="w-full pl-12 pr-4 py-4 bg-slate-950/40 border border-white/5 rounded-2xl text-xs font-bold tracking-widest text-white focus:outline-none focus:border-emerald-500/30 transition-all uppercase" value={idSearch} onChange={(e) => setIdSearch(e.target.value)} />
                                         </div>
                                     </div>
 
-                                    {!isSearching ? (
-                                        <div className="bg-slate-50 rounded-3xl border border-dashed border-slate-300 py-16 text-center">
-                                            <div className="flex justify-center mb-4 text-slate-300"><Icon name="Search" size={32} /></div>
-                                            <h3 className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Enter search criteria to begin</h3>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {filteredData.map((row, idx) => {
-                                                const hasActiveDPD = row.dpd > 0 || row.activeDpdLoans > 0;
+                                    <div className="space-y-4 pb-20">
+                                        {filteredData.length > 0 ? (
+                                            filteredData.map((row, idx) => {
+                                                const hasDpd = row.dpd > 0 || row.activeDpdLoans > 0;
                                                 return (
-                                                    <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden soft-shadow">
-                                                        <div className="bg-slate-50 px-6 py-3 flex justify-between items-center border-b border-slate-200">
-                                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">RECORD_{idx+1}</span>
-                                                            <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase flex items-center gap-1.5 ${hasActiveDPD ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                                <Icon name={hasActiveDPD ? "AlertCircle" : "CheckCircle2"} size={10} /> {hasActiveDPD ? "DPD DETECTED" : "CLEAR STATUS"}
+                                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} key={idx} className="glass-panel rounded-3xl overflow-hidden shadow-2xl">
+                                                        <div className="bg-emerald-500/10 px-6 py-3 flex justify-between items-center border-b border-white/5">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">System Record // {row.auId}</span>
+                                                            </div>
+                                                            <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 ${hasDpd ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                                                                <Icon name={hasDpd ? "AlertCircle" : "CheckCircle2"} size={10} /> {hasDpd ? "DPD DETECTED" : "VERIFIED CLEAR"}
                                                             </div>
                                                         </div>
-                                                        <div className="divide-y divide-slate-100">
-                                                            <SideCell label="AU_ID" value={row.auId} icon={<Icon name="Hash" />} />
-                                                            <SideCell label="Full Name" value={row.name} icon={<Icon name="User" />} />
-                                                            <SideCell label="Contact" value={row.phone} icon={<Icon name="Phone" />} />
-                                                            <SideCell label="BNPL Limit" value={`₹${row.bnplLimit.toLocaleString()}`} icon={<Icon name="CreditCard" />} isLimit />
-                                                            <SideCell label="Fungible" value={`₹${row.fungibleLimit.toLocaleString()}`} icon={<Icon name="Activity" />} />
-                                                            <SideCell label="DPD Count" value={row.dpd} icon={<Icon name="AlertCircle" />} isDanger={row.dpd > 0} />
-                                                            <SideCell label="Active DPD" value={hasActiveDPD ? "YES" : "NO"} icon={<Icon name="ShieldAlert" />} isDanger={hasActiveDPD} isSuccess={!hasActiveDPD} />
+                                                        <div className="bg-slate-950/20">
+                                                            <DataRow label="Legal Name" value={row.name} icon={<Icon name="User" />} />
+                                                            <DataRow label="Phone Link" value={row.phone} icon={<Icon name="Phone" />} />
+                                                            <DataRow label="BNPL Allocation" value={`₹${row.bnplLimit.toLocaleString()}`} icon={<Icon name="CreditCard" />} isLimit />
+                                                            <DataRow label="Fungible Credits" value={`₹${row.fungibleLimit.toLocaleString()}`} icon={<Icon name="Activity" />} />
+                                                            <DataRow label="Delinquency Count" value={row.dpd} icon={<Icon name="AlertCircle" />} isDanger={row.dpd > 0} />
+                                                            <DataRow 
+                                                                label="Active DPD" 
+                                                                value={row.dpd > 0 ? "YES" : "NO"} 
+                                                                icon={<Icon name="ShieldAlert" />} 
+                                                                isDanger={row.dpd > 0} 
+                                                                isSuccess={row.dpd === 0} 
+                                                            />
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                                 );
-                                            })}
-                                            {filteredData.length === 0 && (
-                                                <div className="text-center py-10">
-                                                    <p className="text-slate-400 text-sm font-medium">No records matching your search.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                            })
+                                        ) : (
+                                            <div className="py-20 text-center opacity-30 border-2 border-dashed border-white/5 rounded-3xl">
+                                                <div className="flex justify-center mb-4"><Icon name="Search" size={40} className="text-slate-500" /></div>
+                                                <p className="text-[10px] font-black tracking-[0.4em] uppercase text-slate-400">Waiting for Query Parameters</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
 
-                    <footer className="mt-auto py-10 text-center opacity-60">
-                        <div className="flex justify-center gap-4 items-center h-6 grayscale opacity-50">
+                    <footer className="mt-auto py-8 text-center relative z-10 pointer-events-none">
+                        <div className="flex justify-center gap-6 items-center h-5 opacity-40 grayscale hover:grayscale-0 transition-all">
                             <img src="image_7fa731.png" className="h-full" />
-                            <div className="w-px h-4 bg-slate-300"></div>
-                            <img src="ninjacart.png" className="h-3/4" />
+                            <div className="w-px h-full bg-white/20"></div>
+                            <img src="ninjacart.png" className="h-3/4 invert brightness-200" />
                         </div>
-                        <p className="mt-4 text-[10px] font-bold text-slate-400 tracking-widest uppercase">Financial Terminal v2.0</p>
+                        <p className="mt-4 text-[8px] font-black text-slate-500 tracking-[0.5em] uppercase">Encryption Active // Ninjacart Fin-Terminal v2.1</p>
                     </footer>
                 </div>
             );
